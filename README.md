@@ -172,6 +172,29 @@ Frontend akan berjalan di `http://localhost:3000`
 ### Format Tanggal
 Semua tanggal menggunakan format Indonesia: DD-MM-YYYY
 
+## Deployment ke Shared Hosting
+
+Jika shared hosting Anda **tidak mendukung npm install**, aplikasi ini sudah dikonfigurasi untuk static export.
+
+### Quick Start
+
+1. **Build frontend di komputer lokal:**
+   ```powershell
+   .\build-for-shared-hosting.ps1
+   ```
+
+2. **Upload folder `frontend/out/`** ke shared hosting
+
+3. **Deploy backend Laravel** seperti biasa
+
+Lihat **[DEPLOY_SHARED_HOSTING.md](./DEPLOY_SHARED_HOSTING.md)** untuk panduan lengkap deployment ke shared hosting.
+
+### Catatan Penting
+
+- Frontend harus di-build di komputer lokal (yang punya Node.js)
+- Hasil build adalah static files yang bisa di-upload ke shared hosting
+- Backend Laravel tetap perlu PHP + MySQL di shared hosting
+
 ## Lisensi
 
 Proyek ini dibuat untuk keperluan internal sekolah.
