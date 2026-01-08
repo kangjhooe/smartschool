@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreGuruRequest;
+use App\Http\Requests\UpdateGuruRequest;
 use App\Models\Guru;
 use Illuminate\Http\Request;
 
@@ -12,26 +14,20 @@ class GuruController extends BaseController
     {
         $instansiId = $this->getInstansiId($request);
         
+        $perPage = $request->get('per_page', 15); // Default 15 items per page
+        $perPage = min(max(1, $perPage), 100); // Limit between 1-100
+        
         $gurus = Guru::where('instansi_id', $instansiId)
             ->with(['user', 'instansi'])
             ->orderBy('nama_lengkap')
-            ->get();
+            ->paginate($perPage);
 
         return $this->successResponse($gurus);
     }
 
-    public function store(Request $request)
+    public function store(StoreGuruRequest $request)
     {
         $instansiId = $this->getInstansiId($request);
-
-        $request->validate([
-            'nip' => 'nullable|string|max:255',
-            'nama_lengkap' => 'required|string|max:255',
-            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
-            'tanggal_lahir' => 'nullable|date',
-            'alamat' => 'nullable|string',
-            'telepon' => 'nullable|string|max:20',
-        ]);
 
         $guru = Guru::create([
             'instansi_id' => $instansiId,
@@ -52,58 +48,82 @@ class GuruController extends BaseController
 
     public function show(Request $request, string $id)
     {
-        $instansiId = $this->getInstansiId($request);
-        
-        $guru = Guru::where('instansi_id', $instansiId)
-            ->where('id', $id)
-            ->with(['user', 'instansi', 'kelasWali'])
-            ->firstOrFail();
+        try {
+            $instansiId = $this->getInstansiId($request);
+            
+            $guru = Guru::where('instansi_id', $instansiId)
+                ->where('id', $id)
+                ->with(['user', 'instansi', 'kelasWali'])
+                ->firstOrFail();
 
-        return $this->successResponse($guru);
+            return $this->successResponse($guru);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mengambil data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateGuruRequest $request, string $id)
     {
-        $instansiId = $this->getInstansiId($request);
-        
-        $guru = Guru::where('instansi_id', $instansiId)
-            ->where('id', $id)
-            ->firstOrFail();
+        try {
+            $instansiId = $this->getInstansiId($request);
+            
+            $guru = Guru::where('instansi_id', $instansiId)
+                ->where('id', $id)
+                ->firstOrFail();
 
-        $request->validate([
-            'nip' => 'nullable|string|max:255',
-            'nama_lengkap' => 'required|string|max:255',
-            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
-            'tanggal_lahir' => 'nullable|date',
-            'alamat' => 'nullable|string',
-            'telepon' => 'nullable|string|max:20',
-        ]);
+            $guru->update($request->only([
+                'nip',
+                'nama_lengkap',
+                'jenis_kelamin',
+                'tanggal_lahir',
+                'alamat',
+                'telepon',
+            ]));
 
-        $guru->update($request->only([
-            'nip',
-            'nama_lengkap',
-            'jenis_kelamin',
-            'tanggal_lahir',
-            'alamat',
-            'telepon',
-        ]));
-
-        return $this->successResponse(
-            $guru->load(['user', 'instansi']),
-            'Guru berhasil diperbarui'
-        );
+            return $this->successResponse(
+                $guru->load(['user', 'instansi']),
+                'Guru berhasil diperbarui'
+            );
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat memperbarui data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function destroy(Request $request, string $id)
     {
-        $instansiId = $this->getInstansiId($request);
-        
-        $guru = Guru::where('instansi_id', $instansiId)
-            ->where('id', $id)
-            ->firstOrFail();
+        try {
+            $instansiId = $this->getInstansiId($request);
+            
+            $guru = Guru::where('instansi_id', $instansiId)
+                ->where('id', $id)
+                ->firstOrFail();
 
-        $guru->delete();
+            $guru->delete();
 
-        return $this->successResponse(null, 'Guru berhasil dihapus');
+            return $this->successResponse(null, 'Guru berhasil dihapus');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat menghapus data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -44,7 +44,7 @@ export default function RegisterPage() {
       await registerSekolah(formData);
       router.push('/dashboard');
     } catch (err: any) {
-      console.error('Registration error:', err);
+      // Error logging sudah di-handle di api interceptor
       
       // Handle network errors
       if (!err.response) {

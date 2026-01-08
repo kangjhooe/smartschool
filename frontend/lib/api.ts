@@ -20,13 +20,14 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Log request untuk debugging
-    console.log('API Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`
-    });
+    // Log request untuk debugging (hanya di development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+      });
+    }
     
     return config;
   },
@@ -41,13 +42,14 @@ api.interceptors.response.use(
   (error) => {
     // Handle network errors
     if (!error.response) {
-      console.error('Network Error Details:', {
-        message: error.message,
-        code: error.code,
-        request: error.config,
-        apiUrl: API_URL,
-        fullError: error
-      });
+      // Log error hanya di development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Network Error:', {
+          message: error.message,
+          code: error.code,
+          apiUrl: API_URL,
+        });
+      }
       
       if (error.code === 'ECONNABORTED' || error.message === 'Network Error' || error.message?.includes('Network Error')) {
         error.message = 'Tidak dapat terhubung ke server. Pastikan backend server berjalan di http://localhost:8000';

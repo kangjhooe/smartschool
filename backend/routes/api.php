@@ -52,9 +52,11 @@ Route::get('/', function () {
     ]);
 });
 
-// Public routes
-Route::post('/register-sekolah', [AuthController::class, 'registerSekolah']);
-Route::post('/login', [AuthController::class, 'login']);
+// Public routes dengan rate limiting
+Route::post('/register-sekolah', [AuthController::class, 'registerSekolah'])
+    ->middleware('throttle:5,1'); // 5 requests per minute
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1'); // 5 requests per minute
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

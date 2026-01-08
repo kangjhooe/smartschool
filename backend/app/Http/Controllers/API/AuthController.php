@@ -11,19 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function registerSekolah(Request $request)
+    public function registerSekolah(\App\Http\Requests\RegisterSekolahRequest $request)
     {
         try {
-            $request->validate([
-                'npsn' => 'required|string|size:8|unique:sekolah,npsn',
-                'jenjang' => 'required|in:SD/MI,SMP/MTs,SMA/MA,SMK/MAK',
-                'status_sekolah' => 'required|in:Negeri,Swasta',
-                'nama_sekolah' => 'required|string|max:255',
-                'email_sekolah' => 'required|email|max:255|unique:users,email',
-                'name' => 'required|string|max:255',
-                'no_wa' => 'required|string|max:20',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
 
             // Buat sekolah (default status aktif)
             $sekolah = Sekolah::create([

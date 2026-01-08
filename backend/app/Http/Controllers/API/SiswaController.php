@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSiswaRequest;
+use App\Http\Requests\UpdateSiswaRequest;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
 
@@ -10,21 +12,17 @@ class SiswaController extends BaseController
 {
     public function index(Request $request)
     {
-        try {
-            $instansiId = $this->getInstansiId($request);
-            
-            $siswas = Siswa::where('instansi_id', $instansiId)
-                ->with(['user', 'instansi', 'kelas'])
-                ->orderBy('nama_lengkap')
-                ->get();
+        $instansiId = $this->getInstansiId($request);
+        
+        $perPage = $request->get('per_page', 15); // Default 15 items per page
+        $perPage = min(max(1, $perPage), 100); // Limit between 1-100
+        
+        $siswas = Siswa::where('instansi_id', $instansiId)
+            ->with(['user', 'instansi', 'kelas'])
+            ->orderBy('nama_lengkap')
+            ->paginate($perPage);
 
-            return response()->json($siswas);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat mengambil data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return $this->successResponse($siswas);
     }
 
     public function store(Request $request)
@@ -111,21 +109,11 @@ class SiswaController extends BaseController
                 'alamat_wali' => $request->alamat_wali,
             ]);
 
-            return response()->json([
-                'message' => 'Siswa berhasil ditambahkan',
-                'siswa' => $siswa->load(['user', 'instansi']),
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat menyimpan data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return $this->successResponse(
+            $siswa->load(['user', 'instansi']),
+            'Siswa berhasil ditambahkan',
+            201
+        );
     }
 
     public function show(Request $request, string $id)
@@ -238,25 +226,10 @@ class SiswaController extends BaseController
                 'alamat_wali',
             ]));
 
-            return response()->json([
-                'message' => 'Siswa berhasil diperbarui',
-                'siswa' => $siswa->load(['user', 'instansi']),
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Data tidak ditemukan',
-            ], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat memperbarui data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return $this->successResponse(
+            $siswa->load(['user', 'instansi']),
+            'Siswa berhasil diperbarui'
+        );
     }
 
     public function destroy(Request $request, string $id)

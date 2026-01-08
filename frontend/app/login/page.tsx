@@ -25,9 +25,6 @@ export default function LoginPage() {
       setLoading(false);
       router.push('/dashboard');
     } catch (err: any) {
-      // Log error lengkap untuk debugging
-      console.error('Login error caught:', err);
-      
       // Extract error message
       let errorMessage = 'Terjadi kesalahan saat login';
       

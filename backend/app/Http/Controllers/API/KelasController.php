@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreKelasRequest;
+use App\Http\Requests\UpdateKelasRequest;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
 
@@ -10,21 +12,17 @@ class KelasController extends BaseController
 {
     public function index(Request $request)
     {
-        try {
-            $instansiId = $this->getInstansiId($request);
-            
-            $kelas = Kelas::where('instansi_id', $instansiId)
-                ->with(['instansi', 'waliKelas', 'siswa'])
-                ->orderBy('nama')
-                ->get();
+        $instansiId = $this->getInstansiId($request);
+        
+        $perPage = $request->get('per_page', 15); // Default 15 items per page
+        $perPage = min(max(1, $perPage), 100); // Limit between 1-100
+        
+        $kelas = Kelas::where('instansi_id', $instansiId)
+            ->with(['instansi', 'waliKelas', 'siswa'])
+            ->orderBy('nama')
+            ->paginate($perPage);
 
-            return response()->json($kelas);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat mengambil data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return $this->successResponse($kelas);
     }
 
     public function store(Request $request)
@@ -62,21 +60,11 @@ class KelasController extends BaseController
                 'keterangan' => $request->keterangan,
             ]);
 
-            return response()->json([
-                'message' => 'Kelas berhasil ditambahkan',
-                'kelas' => $kelas->load(['instansi', 'waliKelas']),
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat menyimpan data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return $this->successResponse(
+            $kelas->load(['instansi', 'waliKelas']),
+            'Kelas berhasil ditambahkan',
+            201
+        );
     }
 
     public function show(Request $request, string $id)
@@ -102,7 +90,7 @@ class KelasController extends BaseController
         }
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateKelasRequest $request, string $id)
     {
         try {
             $instansiId = $this->getInstansiId($request);
@@ -111,48 +99,22 @@ class KelasController extends BaseController
                 ->where('id', $id)
                 ->firstOrFail();
 
-            $request->validate([
-                'nama' => 'required|string|max:255',
-                'tingkat' => 'nullable|string|max:255',
-                'jurusan' => 'nullable|string|max:255',
-                'wali_kelas_id' => 'nullable|exists:guru,id',
-                'keterangan' => 'nullable|string',
-            ]);
-
-            // Validasi wali_kelas_id harus dari instansi yang sama
-            if ($request->wali_kelas_id) {
-                $guru = \App\Models\Guru::where('id', $request->wali_kelas_id)
-                    ->where('instansi_id', $instansiId)
-                    ->first();
-                
-                if (!$guru) {
-                    return response()->json([
-                        'message' => 'Guru yang dipilih tidak ditemukan atau tidak terikat ke sekolah ini',
-                    ], 422);
-                }
-            }
-
             $kelas->update($request->only([
-                'nama',
-                'tingkat',
-                'jurusan',
-                'wali_kelas_id',
-                'keterangan',
-            ]));
+                    'nama',
+                    'tingkat',
+                    'jurusan',
+                    'wali_kelas_id',
+                    'keterangan',
+                ]));
 
-            return response()->json([
-                'message' => 'Kelas berhasil diperbarui',
-                'kelas' => $kelas->load(['instansi', 'waliKelas']),
-            ]);
+            return $this->successResponse(
+                $kelas->load(['instansi', 'waliKelas']),
+                'Kelas berhasil diperbarui'
+            );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Data tidak ditemukan',
             ], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Terjadi kesalahan saat memperbarui data',

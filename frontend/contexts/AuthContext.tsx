@@ -72,7 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       localStorage.setItem('user', JSON.stringify(user));
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      // Log error hanya di development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to refresh user:', error);
+      }
     }
   };
 
