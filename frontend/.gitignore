@@ -15,7 +15,7 @@
 
 # next.js
 /.next/
-/out/
+# /out/ - Di-comment agar hasil build bisa di-commit untuk shared hosting
 
 # production
 /build

@@ -174,7 +174,7 @@ export default function ProfilPage() {
     );
   }
 
-  const hasPendingRequest = pendingRequest && pendingRequest.status === 'pending';
+  const hasPendingRequest = !!(pendingRequest && pendingRequest.status === 'pending');
 
   return (
     <Layout>
@@ -485,7 +485,7 @@ export default function ProfilPage() {
               <Button
                 type="submit"
                 disabled={updating}
-                loading={updating}
+                isLoading={updating}
               >
                 Simpan Perubahan
               </Button>
@@ -549,7 +549,7 @@ export default function ProfilPage() {
               <Button
                 type="submit"
                 disabled={submitting || hasPendingRequest}
-                loading={submitting}
+                isLoading={submitting}
               >
                 {hasPendingRequest ? 'Request Sedang Diproses' : 'Kirim Request Perubahan'}
               </Button>
